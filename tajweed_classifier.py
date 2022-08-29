@@ -6,9 +6,42 @@ import multiprocessing
 import os
 import sys
 import unicodedata
+import argparse
 
 RangeAttributes = namedtuple("Attributes", "start end attributes")
 
+RULE2E = {
+    'ghunnah'               : 'g',
+    'hamzat_wasl'           : 'h',
+    'idghaam_ghunnah'       : 'd',
+    'idghaam_mutajanisayn'  : 'j',
+    'idghaam_mutaqaribayn'  : 'b',
+    'idghaam_no_ghunnah'    : 'n',
+    'idghaam_shafawi'       : 'f',
+    'ikhfa'                 : 'k',
+    'ikhfa_shafawi'         : 'w',
+    'iqlab'                 : 'i',
+    'lam_shamsiyyah'        : 'l',
+    'madd_2'                : '2',
+    'madd_246'              : 'm',
+    'madd_6'                : '6',
+    'madd_munfasil'         : 's',
+    'madd_muttasil'         : 't',
+    'qalqalah'              : 'q',
+    'silent'                : 'e'
+}
+
+class embedding:
+    pass
+
+def embed(o):
+    etext = o.text
+    extra = 0
+    rules = set([])
+    for a in o.annotations:
+        etext = etext[ :a["end"]+extra ] + RULE2E[a["rule"]] +  etext[ a["end"]+extra: ]
+        extra += 1
+    return f'{o.surah}|{o.ayah}|{etext}'
 
 def attributes_for(rule, txt, i, include_this=True, auxiliary_stream=None):
     # Determine bounds of this letter.
@@ -397,17 +430,41 @@ def label_ayah(params):
     assert all(len(q) == 0 for q in annotations_run.values()), \
         "Some rules left hanging at end of ayah @ %d: %s (%d:%d) %s" % \
         (len(text), annotations_run, surah, ayah, annotations)
-    return {
+    json = {
         "surah": surah,
         "ayah": ayah,
         "annotations": sorted(annotations, key=lambda x: x["start"])
     }
+    if args.json:
+        return json
+    else:
+        e = embedding()
+        e.__dict__ = json
+        e.text = text
+        return embed(e)
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+def delete_last_line(num=1):
+    for x in range(num):
+        eprint('\x1b[1A')    #cursor up one line
+        eprint('\x1b[2K')    #delete last line
+
+def spinning_cursor():
+    while True:
+        for cursor in '|/-\\':
+            yield cursor
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Generate Quran Tajweed Label Embeddings.')
+    parser.add_argument('--json', action='store_true', help='Generate a JSON file, instead of embeddings')
+    global args
+    args = parser.parse_args()
     # Load rules from incredibly high-tech datastore.
     rule_trees = {}
-    rule_start_files = glob.glob("output/rule_trees/*.start.json")
+    rule_start_files = glob.glob("rule_trees/*.start.json")
+    eprint("Loading rules..", end=" ")
     for start_file in rule_start_files:
         rule_name = os.path.basename(start_file).partition(".")[0]
         end_file = start_file.replace(".start.", ".end.")
@@ -415,19 +472,29 @@ if __name__ == "__main__":
             "start": json2tree(json.load(open(start_file))),
             "end": json2tree(json.load(open(end_file))),
         }
-
     # Read in text to classify
     tasks = []
+    spinner = spinning_cursor()
+    eprint("\nReading Text..", end=" ")
     for line in sys.stdin:
+        sys.stdout.write(next(spinner))
+        sys.stdout.flush()
         line = line.split("|")
         if len(line) != 3:
+            sys.stdout.write('\b')
             continue
         tasks.append((int(line[0]), int(line[1]), line[2].strip(), rule_trees))
+        sys.stdout.write('\b')
 
     # Perform classification.
+    eprint("\nPerforming classification.. (please wait)")
     with multiprocessing.Pool() as p:
         results = p.map(label_ayah, tasks)
 
     # Pretty-print output because disk space is cheap.
-    json.dump(results, sys.stdout, indent=2, sort_keys=True)
+    delete_last_line(3)
+    if args.json:
+        json.dump(results, sys.stdout, indent=2, sort_keys=True)
+    else:
+        print("\n".join(results))
     print("")
