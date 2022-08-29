@@ -7,6 +7,8 @@ import os
 import sys
 import unicodedata
 import argparse
+import tempfile
+import requests
 
 RangeAttributes = namedtuple("Attributes", "start end attributes")
 
@@ -472,11 +474,22 @@ if __name__ == "__main__":
             "start": json2tree(json.load(open(start_file))),
             "end": json2tree(json.load(open(end_file))),
         }
+    if sys.stdin.isatty():
+        txt_url = "https://tanzil.net/pub/download/index.php?quranType=uthmani&outType=txt-2&agree=true"
+        eprint(f'\nSTDIN is empty! Downloading Quran Text from:\n{txt_url}', end="")
+        req = requests.get(txt_url, allow_redirects=True)
+        fname = 'quran-uthmani.txt'
+        f = open(fname, 'wb')
+        f.write(req.content)
+        f.close()
+        file = open(fname,'r').readlines()
+    else:
+        file = sys.stdin
     # Read in text to classify
     tasks = []
     spinner = spinning_cursor()
     eprint("\nReading Text..", end=" ")
-    for line in sys.stdin:
+    for line in file:
         sys.stdout.write(next(spinner))
         sys.stdout.flush()
         line = line.split("|")
