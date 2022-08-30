@@ -3,6 +3,7 @@ from tree import Exemplar, json2tree
 import glob
 import json
 import multiprocessing
+import tqdm
 import os
 import sys
 import unicodedata
@@ -41,7 +42,7 @@ def embed(o):
     extra = 0
     rules = set([])
     for a in o.annotations:
-        etext = etext[ :a["end"]+extra ] + RULE2E[a["rule"]] +  etext[ a["end"]+extra: ]
+        etext = etext[ :a["start"]+1+extra ] + RULE2E[a["rule"]] +  etext[ a["start"]+1+extra: ]
         extra += 1
     return f'{o.surah}|{o.ayah}|{etext}'
 
@@ -450,8 +451,8 @@ def eprint(*args, **kwargs):
 
 def delete_last_line(num=1):
     for x in range(num):
-        eprint('\x1b[1A')    #cursor up one line
-        eprint('\x1b[2K')    #delete last line
+        eprint('\x1b[1A', end="")    #cursor up one line
+        eprint('\x1b[2K', end="")    #delete last line
 
 def spinning_cursor():
     while True:
@@ -476,12 +477,15 @@ if __name__ == "__main__":
         }
     if sys.stdin.isatty():
         txt_url = "https://tanzil.net/pub/download/index.php?quranType=uthmani&outType=txt-2&agree=true"
-        eprint(f'\nSTDIN is empty! Downloading Quran Text from:\n{txt_url}', end="")
-        req = requests.get(txt_url, allow_redirects=True)
         fname = 'quran-uthmani.txt'
-        f = open(fname, 'wb')
-        f.write(req.content)
-        f.close()
+        if(os.path.exists(fname)):
+            eprint(f'\nSTDIN is empty! Reading Quran Text from:\n\t{fname}', end="")            
+        else:
+            eprint(f'\nSTDIN is empty! Downloading Quran Text from:\n\t{txt_url}', end="")
+            req = requests.get(txt_url, allow_redirects=True)
+            f = open(fname, 'wb')
+            f.write(req.content)
+            f.close()
         file = open(fname,'r').readlines()
     else:
         file = sys.stdin
@@ -490,22 +494,24 @@ if __name__ == "__main__":
     spinner = spinning_cursor()
     eprint("\nReading Text..", end=" ")
     for line in file:
-        sys.stdout.write(next(spinner))
-        sys.stdout.flush()
+        eprint(next(spinner), end="")
         line = line.split("|")
         if len(line) != 3:
-            sys.stdout.write('\b')
+            eprint('\b', end="")
             continue
+        eprint('\b', end="")
+        sys.stderr.flush()
         tasks.append((int(line[0]), int(line[1]), line[2].strip(), rule_trees))
-        sys.stdout.write('\b')
 
     # Perform classification.
-    eprint("\nPerforming classification.. (please wait)")
-    with multiprocessing.Pool() as p:
-        results = p.map(label_ayah, tasks)
+    eprint("\nPerforming classification..")
+    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+    results = []
+    for result in tqdm.tqdm(pool.imap(label_ayah, tasks), total=len(tasks)):
+        results.append(result)
 
     # Pretty-print output because disk space is cheap.
-    delete_last_line(3)
+    delete_last_line(6)
     if args.json:
         json.dump(results, sys.stdout, indent=2, sort_keys=True)
     else:
