@@ -1,3 +1,5 @@
+#!/bin/python3
+
 from collections import deque, namedtuple
 from tree import Exemplar, json2tree
 import glob
@@ -462,8 +464,11 @@ def spinning_cursor():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate Quran Tajweed Label Embeddings.')
     parser.add_argument('--json', action='store_true', help='Generate a JSON file, instead of embeddings')
+    parser.add_argument('--dictionary', action='store_true', help='Generate a dictionary file. Does not work with --json')
     global args
+    global dict
     args = parser.parse_args()
+    dict = {'h'}
     # Load rules from incredibly high-tech datastore.
     rule_trees = {}
     rule_start_files = glob.glob("rule_trees/*.start.json")
@@ -479,7 +484,7 @@ if __name__ == "__main__":
         txt_url = "https://tanzil.net/pub/download/index.php?quranType=uthmani&outType=txt-2&agree=true"
         fname = 'quran-uthmani.txt'
         if(os.path.exists(fname)):
-            eprint(f'\nSTDIN is empty! Reading Quran Text from:\n\t{fname}', end="")            
+            eprint(f'\nSTDIN is empty! Reading Quran Text from:\n\t{fname}', end="")
         else:
             eprint(f'\nSTDIN is empty! Downloading Quran Text from:\n\t{txt_url}', end="")
             req = requests.get(txt_url, allow_redirects=True)
@@ -517,3 +522,13 @@ if __name__ == "__main__":
     else:
         print("\n".join(results))
     print("")
+
+    # Print the optional Dictionary
+    if args.dictionary:
+        for i in results:
+            dict = dict.union(set(i.split('|')[2]))
+        d = open('dictionary.txt', 'w')
+        d.write('# Quran Alphabets')
+        d.write('\n'.join(sorted(dict)))
+        d.write('\n#New Line')
+        d.close()
