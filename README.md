@@ -1,40 +1,41 @@
-### NOTE: This project is not actively maintained
-Please consider using the [Quran.com API](https://quran.api-docs.io/v4/quran/get-uthmani-script-of-ayah) instead.
-
-# quran-tajweed
+# Quran Tajweed Embedded
 
 <img src="https://i.imgur.com/uwp35yJ.png" width="500"/>
 
 
-Tajweed annotations for the Qur'an (riwayat hafs). The data is available as a JSON file with exact character indices for each rule, and as individual decision trees for each rule.
+Tajweed annotations for the Qur'an (riwayat hafs). The data is available as an string file with embedded rules. Additionally, a JSON file with exact character indices for each rule, and as individual decision trees for each rule.
 
 You can use this data to display the Qur'an with tajweed highlighting, refine models for Qur'anic speech recognition, or - if you enjoy decision trees - improve your own recitation.
 
-The following tajweed rules are supported:
+The following tajweed rules are supported. Note that in case of embedded output (default), the single character is the embedding to be added within the Quran text. The JSON contains the longer text rule name.
 
-* Ghunnah (`ghunnah`)
+* Ghunnah (`ghunnah`) (`g`)
 * Idghaam...
-  * With Ghunnah (`idghaam_ghunnah`)
-  * Without Ghunnah (`idghaam_no_ghunnah`)
-  * Mutajaanisain (`idghaam_mutajaanisain`)
-  * Mutaqaaribain (`idghaam_mutaqaaribain`)
-  * Shafawi (`idghaam_shafawi`)
+  * With Ghunnah (`idghaam_ghunnah`) (`d`)
+  * Without Ghunnah (`idghaam_no_ghunnah`) (`n`) 
+  * Mutajaanisain (`idghaam_mutajaanisain`) (`j`)
+  * Mutaqaaribain (`idghaam_mutaqaaribain`) (`b`)
+  * Shafawi (`idghaam_shafawi`) (`f`)
 * Ikhfa...
-  * Ikhfa (`ikhfa`)
-  * Ikhfa Shafawi (`ikhfa_shafawi`)
-* Iqlab (`iqlab`)
+  * Ikhfa (`ikhfa`) (`k`)
+  * Ikhfa Shafawi (`ikhfa_shafawi`) (`w`)
+* Iqlab (`iqlab`) (`i`)
 * Madd...
-  * Regular: 2 harakat (`madd_2`)
-  * al-Aarid/al-Leen: 2, 4, 6 harakat (`madd_246`)
-  * al-Muttasil: 4, 5 harakat (`madd_muttasil`)
-  * al-Munfasil: 4, 5 harakat (`madd_munfasil`)
-  * Laazim: 6 harakat (`madd_6`)
-* Qalqalah (`qalqalah`)
-* Hamzat al-Wasl (`hamzat_wasl`)
-* Lam al-Shamsiyyah (`lam_shamsiyyah`)
-* Silent (`silent`)
+  * Regular: 2 harakat (`madd_2`) (`o`)
+  * al-Aarid/al-Leen: 2, 4, 6 harakat (`madd_246`) (`m`)
+  * al-Muttasil: 4, 5 harakat (`madd_muttasil`) (`t`)
+  * al-Munfasil: 4, 5 harakat (`madd_munfasil`) (`f`)
+  * Laazim: 6 harakat (`madd_6`) (`x`)
+* Qalqalah (`qalqalah`) (`q`)
+* Hamzat al-Wasl (`hamzat_wasl`) (`h`)
+* Lam al-Shamsiyyah (`lam_shamsiyyah`) (`l`)
+* Silent (`silent`) (`e`)
 
 This project was built using information from [ReciteQuran.com](http://recitequran.com), the [Dar al-Maarifah](http://tajweedquran.com) tajweed masaahif, and others.
+
+## Using the tajweed embedded file
+
+To display the Quran text, just filter out all [a-z] characters, those are the embedded tajweed rule. Each char maps a rule in place. To highlight the tajweed rules, the embedded rules should be smartly used forward.
 
 ## Using the tajweed JSON file
 
