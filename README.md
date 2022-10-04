@@ -35,7 +35,7 @@ This project was built using information from [ReciteQuran.com](http://recitequr
 
 ## Using the tajweed embedded file
 
-To display the Quran text, just filter out all [a-z] characters, those are the embedded tajweed rule. Each char maps a rule in place. To highlight the tajweed rules, the embedded rules should be smartly used forward.
+The generated [embedded Quran Text](output/tajweed.hafs.embeded.txt) is what you need as a start. You may probably need the [dictionary](output/dictionary_chars.txt) as well. To display the Quran text, just filter out all [a-z] characters, those are the embedded tajweed rule. Each char maps a rule in place. To highlight the tajweed rules, the embedded rules should be smartly used forward.
 
 ## Using the tajweed JSON file
 
